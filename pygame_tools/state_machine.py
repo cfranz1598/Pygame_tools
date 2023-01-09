@@ -6,9 +6,10 @@ class BaseState(object):
         self.done = False
         self.quit = False
         self.next_state = None
+        self.screen_surf = pygame.display.get_surface()
         self.screen_rect = pygame.display.get_surface().get_rect()
         self.persist = {}
-        self.font = pygame.font.Font(None, 24)
+        self.font = pygame.font.Font(None, 50)
 
     def startup(self, persistent):
         self.persist = persistent

@@ -1,0 +1,160 @@
+What does MenuMachine do:
+    Formats a positions the menu and refects changes in selected item
+    All event processing is your responsibility.  This process knows only
+    that it needs to display the menu.  It will then blit all the pieces
+    to where they go.  You need to do the pygame.display.flip() or
+    pygame.display.update()
+
+    Your job is to initialize the object, change the MenuMachine.selected, and call the draw.
+    The MenuMachine is a integer reflecting an index into the "Selections" string array.
+
+What does the Menu Need:
+
+Menu definition dictionary:
+    Title => string
+    Selections => array of strings
+    Fonts => array of fonts (Title Font, Selection Items font (Cursor Font, selected item font))
+    colors => Colors (strings, tuples, and/or Pygame.color()) same as fonts
+    cursor => string, will set to False if missing
+    border => boolean, will set to False if missing
+    justify => string ("left", "right", "center") center is default if missing
+                - This is justifying the entire menu on the screen, not the text
+                - If cursor is selected selection text is left justified
+    topleft => integer tuple - (x, y) position of the top of the menu
+                             - if topleft.x is non zero, this overrides 'justify'
+    margin => integer
+
+Init -
+    validate the menu dictionary - throws exceptions/warning
+    Gather input
+    define needed data to perform the positioning calculations
+    render text (Title/ Selection Items)
+    Build python.Rect to display and position each element
+        elements are:
+        *Title Box
+        *Selection Box
+        Title text
+        Selection text
+        *Cursor
+        (* means dependant on menu definition)
+
+Validate(MenuDict) -
+        Returns: Menu Dict
+        Exceptions (raise): TypeError, ValueError, UserWarning
+    review each element of the menu definition dictionary for validity of
+    type (TypeError), content (ValueError), and logic (ValueError/UserWarning)
+        Title   - assert  - if not a string
+                - TypeError  - if missing
+                - ValueError - if string is length 0
+        Selection Items - assert - if missing
+                        - TypeError - if not an array of strings
+                        - ValueError - if less then 3 string
+        Fonts   - assert   - if missing
+                - TypeError   - if no array of fonts or values not of type pygame.font.Font
+                - ValueError  - if not 2 or more fonts
+        Colors  - TypeError   - each element must be of type pygame.Color, Tuple, or string
+                - ValueError  - Must be three of them (color of Title, Item, Cursor/Selected Item)
+        Cursor  - TypeError   - must be string or missing if missing will be created as False
+        Border  - TypeError   - if not Boolean (True/False)
+        Justify - TypeError   - must be string
+                - ValueError  - must ("left", "right", "center")
+                - UserWarning - if missing (will default to "center")
+                - UserWarning - if Cursor defined and value other then missing or "center"
+        TopLeft - TypeError   - not a single integer or a tuple containing two integers -
+                - UserWarning - if doesn't exist defined as 1/5 screen height
+        Margin  - TypeError   - if not integer
+                - UserWarning - if missing, will default to 15
+
+build Python.Rect(s) -
+    *Title Box Rect
+    *Text Box Rect
+    Title Rendered Text Rect
+    Selection items rendered text Rect(s)
+    *Cursor position Rect(s)
+
+Variations  - Cursor - Yes/No - no cursor then selection text is centered
+            - Border - Yes/No - put a border around the title and selections
+            - topleft - Tuple of 2 integers, x and y of the top left of the menu
+                        if x is 0 it will be calculated based on Cursor, Border, font size, etc.)
+            - justify - "left/"right/"center" this applies to the whole menu as to where
+                        on the screen the menu will sit.  If used, only the 'y' of topleft is used
+
+calculations
+        for each topleft, justify, cursor evalulate the topleft for title/selections
+                if topleft complete?
+                        yes - Cursor, only controls selection items positioning
+                        x + margin
+                        x + marin * 2 + cursor width
+                else
+                        no - look at justify
+                        if left - x = 1
+                        if right - x =
+                                if cursor - screen left - ((margin * 3) + max_length + cursor_width)
+                                else screen left - ((margin * 2) + max_length
+                        if center - if cursor
+                                x = screen_center - ((margin * 3) + max_length + cursor_width)
+                                width = ((margin * 3) + max_length + cursor_width)
+                        else    x = screen_center - ((margin * 2) + max_length
+                                width = ((margin * 2) + max_length
+
+
+Draw -
+    if Borders - draw Borders
+    blit Title
+    if Cursor - draw Selection items with cursor correctly positioned
+    if no cursor - draw selection items centered with seletion items correctly colored
+
+Points that need calculating:
+calculated x = based on screen width, justify adjustments, and max size of text and margins
+calculated y = TopLeft y
+title area Rect x = calculated x
+                y = TopLeft y
+                width = max width of title and text (include cursor if appliable)
+                height = title text height and 2 margins
+title text Rect x = calculated x plus margin
+                y = TopLeft y plus margin
+                width = width of rendered text
+                height = height of rendered text
+text area Rect
+text render Rect for each item
+
+center is ... left x + max width / 2
+max width is max text width plus (cursor) margin * 3 plus cursor width
+                            plus margin * 2
+
+       1+--------------------+3
+        |      margin        |
+        |    4title text     |
+        |      margin        |
+       2+--------------------+
+        |      margin        |
+       5|M cursor M text 1 M |
+        |      margin        |
+        |M cursor M text 2 M |
+        |      margin        |
+       7+--------------------+
+
+1) Start at 1, 1
+2) calculate text items start  - (margin * 2) + title height
+3) calculate width - cursor    - (margin * 3) + cursor width + max text width
+                   - no cursor - (margin * 2) + max text width
+4) position title text - x - centered within (3) (3.x / 2)
+                         y - offset 1 margin
+5) position first text - x - cursor? 1 margin  (cursor, margin, text)
+                             no cursor? center (3)
+                         y - offset 1 margin from (3)
+6) Loop through items and place them same logic as 5 with margin offset
+7) calculate bottom of menu - x - 1
+                            - y - last item y plus margin
+
+if border
+        title border: 1,1 to (3)x,1
+        items border: (2) to (7)
+
+justify - move_ip
+        left - adjust for y displacement
+        right - x displacement is screen width - menu width
+                y - is topleft_y
+        center - x displacement is half screen width - 1/2 menu width
+               - y displacement is topleft_y
+Now just pygame.Rect.move_ip() all rectangles by offset (x,y)

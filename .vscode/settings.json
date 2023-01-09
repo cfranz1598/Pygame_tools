@@ -1,0 +1,14 @@
+{
+	"python.linting.flake8Enabled": true,
+	"python.linting.enabled": true,
+	"python.linting.flake8Args": [
+		"--ignore=E24,E501,W504,E701",
+		"--verbose"
+	],
+	"python.linting.pycodestyleEnabled": false,
+	"python.linting.pycodestyleArgs": [
+		"--ignore=E24,E501,W504,E701",
+		"--verbose"
+	],
+	"editor.trimAutoWhitespace": false
+}
